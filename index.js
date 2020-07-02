@@ -1,5 +1,5 @@
 const express = require('express');
-const connectToDB = require('./db-config/db-connect.js');
+const connectToDB = require('./database/db-connect.js');
 const config = require('./config');
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/error');
@@ -12,9 +12,9 @@ const app = express();
 
 // TODO: Conección a la BD en mogodb
 
+connectToDB(dbUrl);
 app.set('config', config);
 app.set('pkg', pkg);
-connectToDB();
 
 
 // parse application/x-www-form-urlencoded
@@ -22,10 +22,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(authMiddleware(secret));
 
-// Registrar rutas
-app.get('/', (req, res) => {
-  res.send('Hello world :D');
-});
 routes(app, (err) => {
   if (err) {
     throw err;
