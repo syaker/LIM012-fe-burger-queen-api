@@ -124,11 +124,11 @@ module.exports = (app, next) => {
     if (!email || !password) {
       return next(400)
     }
-    // User.findOne({ email: email }, (err, dbUser) => {
-    //   if (dbUser) {
-    //     return next(403);
-    //   }
-    // })
+    User.findOne({ email: email }, (err, dbUser) => {
+      if (dbUser) {
+        return next(403);
+      }
+    })
     const user = new User({
       email,
       password: bcrypt.hashSync(password, 10),
