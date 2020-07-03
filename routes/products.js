@@ -2,12 +2,7 @@ const {
   requireAuth,
   requireAdmin,
 } = require('../middleware/auth');
-const { getAllDocuments, addDocument } = require('../database/db-functions');
-getAllDocuments('users', { articulo: 'pelota' }).then((e) => console.log(e));
-// addDocument('users', {
-//   email: 'hola11234455@gmail.com',
-//   password: 'aaaaaaaaa'
-// }).then((user) => console.log(user));
+
 /** @module products */
 module.exports = (app, nextMain) => {
   /**

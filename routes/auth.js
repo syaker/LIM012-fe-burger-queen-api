@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
-
+const bcrypt = require('bcrypt');
+const User = require('../database/user-schema');
 const { secret } = config;
 
 /** @module auth */
@@ -23,8 +24,32 @@ module.exports = (app, nextMain) => {
     if (!email || !password) {
       return next(400);
     }
+    User.findOne({ email: email }, (err, dbUser) => {
+      if (err) {
+        return next(500);
+      }
+      // verificar si existe el usuario por medio del email
+      if (!dbUser) {
+        return next(400);
+      }
+      // TODO: autenticar a la usuarix
+      // Verficar si la contrasena corresponde al email
+      if (!bcrypt.compareSync(password, dbUser.password)) {
+        return next(400);
+      }
+    });
+    // Se genera el token de autenticación
+    const token = jwt.sign({
+      uid: dbUser._id,
+    }, secret, {
+      expiresIn: 60 * 60 * 24
+    });
+    resp.json({
+      auth: true,
+      user, dbUser,
+      token,
+    });
 
-    // TODO: autenticar a la usuarix
     next();
   });
 

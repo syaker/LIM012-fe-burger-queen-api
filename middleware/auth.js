@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../database/user-schema');
 
 module.exports = (secret) => (req, resp, next) => {
   const { authorization } = req.headers;
@@ -23,15 +24,23 @@ module.exports = (secret) => (req, resp, next) => {
 };
 
 
-module.exports.isAuthenticated = (req) => (
+module.exports.isAuthenticated = (req) => {
+  const { email } = req.body;
   // TODO: decidir por la informacion del request si la usuaria esta autenticada
-  false
-);
+  User.findOne({ email: email }, (err, dbUser) => {
+    if (dbUser) {
+      return true;
+    } else {
+      console.log('false')
+      return false;
+    }
+  });
+};
 
 
 module.exports.isAdmin = (req) => (
   // TODO: decidir por la informacion del request si la usuaria es admin
-  false
+  true
 );
 
 
