@@ -1,5 +1,5 @@
 const express = require('express');
-const connectToDB = require('./database/db-connect.js');
+const { connectToDB } = require('./database/db-connect.js');
 const config = require('./config');
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/error');

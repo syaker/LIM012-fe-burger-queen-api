@@ -1,9 +1,14 @@
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 
-const connectToDB = async (uri) => {
-  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-  const result = await client.connect();
-  return result.db('BurguerQueenDB');
+exports.connectToDB = async (url) => {
+  try {
+    await mongoose.connect(url, {
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+      useNewUrlParser: true,
+    });
+    console.log('db connected!');
+  } catch (err) {
+    console.log(err);
+  }
 };
-
-module.exports = connectToDB;
