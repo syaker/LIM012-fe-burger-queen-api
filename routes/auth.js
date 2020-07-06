@@ -20,37 +20,36 @@ module.exports = (app, nextMain) => {
    */
   app.post('/auth', (req, resp, next) => {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return next(400);
     }
-    User.findOne({ email: email }, (err, dbUser) => {
+    User.findOne({ email }, (err, dbUser) => {
+      // TODO: autenticar a la usuarix
+      console.log(bcrypt.compareSync(password, dbUser.password));
       if (err) {
         return next(500);
       }
-      // verificar si existe el usuario por medio del email
       if (!dbUser) {
-        return next(400);
+        return next(404);
       }
-      // TODO: autenticar a la usuarix
-      // Verficar si la contrasena corresponde al email
       if (!bcrypt.compareSync(password, dbUser.password)) {
-        return next(400);
-      }
-    });
-    // Se genera el token de autenticación
-    const token = jwt.sign({
-      uid: dbUser._id,
-    }, secret, {
-      expiresIn: 60 * 60 * 24
-    });
-    resp.json({
-      auth: true,
-      user, dbUser,
-      token,
-    });
-
-    next();
+        return next(403);
+      } 
+      return dbUser;
+    }).then((user) => {
+      console.log(user);
+        const token = jwt.sign({
+        uid: user._id,
+      }, secret, {
+        expiresIn: 60 * 60 * 24
+      });
+      resp.set('authorization', token);
+      resp.json({
+        auth: true,
+        user,
+        token,
+      });
+    }).catch((err) =>  next(err));
   });
 
   return nextMain();
