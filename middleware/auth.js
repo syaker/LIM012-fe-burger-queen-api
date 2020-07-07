@@ -17,7 +17,10 @@ module.exports = (secret) => (req, resp, next) => {
     if (err) {
       return next(403);
     }
-    const userId = decodedToken.uid;
+	const userId = decodedToken.uid;
+	if () {
+		
+	}
 
 
     // TODO: Verificar identidad del usuario usando `decodeToken.uid`
