@@ -98,6 +98,14 @@ module.exports = (app, next) => {
    * @code {404} si la usuaria solicitada no existe
    */
   app.get('/users/:uid', requireAuth, (req, resp) => {
+    const { id } = req.params;
+    User.findOne({ _id: id }, (err, dbUser) => {
+      if (err) {
+        return next(404);
+      } else {
+        resp.json(dbUser);
+      }
+    });
   });
 
   /**
@@ -128,18 +136,22 @@ module.exports = (app, next) => {
       if (dbUser) {
         return next(403);
       }
-    })
+    });
     const user = new User({
       email,
       password: bcrypt.hashSync(password, 10),
       roles
     });
-    user.save((err, dbUser) => {
+    user.save((err, newUser) => {
       if (err) {
         return next(400);
       }
-      return next(200);
     });
+    resp.json({
+      email,
+      roles
+    });
+    return next(200);
   });
 
   /**
@@ -164,7 +176,22 @@ module.exports = (app, next) => {
    * @code {403} una usuaria no admin intenta de modificar sus `roles`
    * @code {404} si la usuaria solicitada no existe
    */
-  app.put('/users/:uid', requireAuth, (req, resp, next) => {
+  app.put('/users/:uid', requireAuth, async (req, resp, next) => {
+    const { id } = req.params;
+    const { email, password } = req.body;
+    if (!email || !password) {
+      next(400);
+    }
+    const doc = await User.updateOne({ _id: id }, req.body);
+    if (doc) {
+      resp.json({
+        message: `doc ${id} updated`,
+        document: doc,
+      });
+      return next(200);
+    } else {
+      return next(404);
+    }
   });
 
   /**
@@ -183,7 +210,13 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.delete('/users/:uid', requireAuth, (req, resp, next) => {
+  app.delete('/users/:uid', requireAuth, async(req, resp, next) => {
+    const { id } = req.params;
+    const doc = await User.deleteOne({ _id: id });
+    resp.json({
+      message: `doc ${id} deleted`,
+      document: doc,
+    });
   });
 
   initAdminUser(app, next);

@@ -5,6 +5,7 @@ module.exports = {
     User.find((err, users) => {
       if (err) return next(400);
       resp.json(users);
+      return next();
     })
   },
 };
