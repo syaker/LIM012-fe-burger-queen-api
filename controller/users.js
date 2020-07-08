@@ -1,5 +1,6 @@
 const User = require('../database/user-schema');
 const bcrypt = require('bcrypt');
+const { userAllowed } = require('../middleware/auth');
 
 module.exports = {
   getUsers: (req, resp, next) => {
@@ -10,16 +11,17 @@ module.exports = {
         console.log(err);
         return next(500)
       };
-      const result = users.docs.map((user) => {
+      users.docs.forEach((user) => {
         delete user.password;
         return user;
       });
-      return resp.status(200).json(result);
+      return resp.status(200).json(users.docs);
     });
   },
   getOneUser: (req, resp, next) => {
     const { uid } = req.params;
     const field = uid.match(/@/g) ? 'email' : '_id';
+    if (!userAllowed(req)){ return next(403) }
     User.findOne({ [field]: uid }, { password: 0 }, (err, dbUser) => {
       if (err || !dbUser) {
         return next(404);
@@ -54,9 +56,16 @@ module.exports = {
       });
     });
   },
-  updateUser: async (req, resp, next) => {
+  updateUser: async(req, resp, next) => {
     const { uid } = req.params;
-    const { email, password } = req.body;
+    const { email, password, roles } = req.body;
+    if (!userAllowed(req)){ return next(403) }
+    const userIsAdminField = req.headers.user.roles.admin;
+    if (roles) {
+      if (!userIsAdminField && roles.admin !== userIsAdminField) {
+        return next(403);
+      }
+    }
     if (!email || !password) {
       return next(400);
     }
@@ -64,12 +73,14 @@ module.exports = {
       const doc = await User.updateOne({ _id: uid }, req.body);
       delete doc.password;
       return resp.status(200).json(doc);
-    } catch {
-      return next(404);
-    }
+    } catch(e) {
+      return next(404)
+    };
+
   },
   deleteUser: async (req, resp, next) => {
     const { uid } = req.params;
+    if (!userAllowed(req)){ return next(403) }
     try {
       const doc = await User.deleteOne({ _id: uid });
       return resp.status(200).json(doc);

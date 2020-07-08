@@ -39,6 +39,15 @@ module.exports.isAdmin = (req) => (
   req.headers.user.roles.admin
 );
 
+module.exports.userAllowed = (req) => {
+  const currentUser = req.headers.user;
+  const { uid } = req.params;
+  const field = uid.match(/@/g) ? 'email' : '_id';
+  if (currentUser.roles.admin && currentUser[field] === uid) {
+    return false;
+  }
+  return true;
+};
 
 module.exports.requireAuth = (req, resp, next) => (
   (!module.exports.isAuthenticated(req))

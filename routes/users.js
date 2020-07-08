@@ -71,7 +71,7 @@ module.exports = (app, next) => {
    * @header {String} link.prev Link a la página anterior
    * @header {String} link.next Link a la página siguiente
    * @header {String} link.last Link a la última página
-   * @auth Requiere `token` de autenticación y que la usuaria sea **admin**
+   * x @auth Requiere `token` de autenticación y que la usuaria sea **admin**
    * x @response {Array} users
    * x @response {String} users[]._id
    * x @response {Object} users[].email
@@ -84,19 +84,19 @@ module.exports = (app, next) => {
   app.get('/users', requireAdmin, getUsers);
 
   /**
-   * @name GET /users/:uid
-   * @description Obtiene información de una usuaria
-   * @path {GET} /users/:uid
-   * @params {String} :uid `id` o `email` de la usuaria a consultar
-   * @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a consultar
+   * x @name GET /users/:uid
+   * x @description Obtiene información de una usuaria
+   * x @path {GET} /users/:uid
+   * x @params {String} :uid `id` o `email` de la usuaria a consultar
+   * x @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a consultar
    * x @response {Object} user
    * x @response {String} user._id
    * x @response {Object} user.email
    * x @response {Object} user.roles
    * x @response {Boolean} user.roles.admin
    * x @code {200} si la autenticación es correcta
-   * @code {401} si no hay cabecera de autenticación
-   * @code {403} si no es ni admin o la misma usuaria
+   * x @code {401} si no hay cabecera de autenticación
+   * x @code {403} si no es ni admin o la misma usuaria
    * x @code {404} si la usuaria solicitada no existe
    */
   app.get('/users/:uid', requireAuth, getOneUser);
@@ -109,8 +109,8 @@ module.exports = (app, next) => {
    * x @body {String} password Contraseña
    * x @body {Object} [roles]
    * x @body {Boolean} [roles.admin]
-   * @auth Requiere `token` de autenticación y que la usuaria sea **admin**
-   * @response {Object} user
+   * x @auth Requiere `token` de autenticación y que la usuaria sea **admin**
+   * x @response {Object} user
    * x @response {String} user._id
    * x @response {Object} user.email
    * x @response {Object} user.roles
@@ -131,7 +131,7 @@ module.exports = (app, next) => {
    * x @body {String} password Contraseña
    * x @body {Object} [roles]
    * x @body {Boolean} [roles.admin]
-   * @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a modificar
+   * x @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a modificar
    * x @response {Object} user
    * x @response {String} user._id
    * x @response {Object} user.email
@@ -151,7 +151,7 @@ module.exports = (app, next) => {
    * x @description Elimina una usuaria
    * x @params {String} :uid `id` o `email` de la usuaria a modificar
    * x @path {DELETE} /users
-   *   @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a eliminar
+   * x @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a eliminar
    * x @response {Object} user
    * x @response {String} user._id
    * x @response {Object} user.email

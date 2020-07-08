@@ -26,6 +26,7 @@ module.exports = (app, nextMain) => {
     User.findOne({ email }, (err, dbUser) => {
       // TODO: autenticar a la usuarix
       if (err) {
+        console.log('1er error')
         return next(500);
       }
       if (!dbUser) {
@@ -46,7 +47,7 @@ module.exports = (app, nextMain) => {
         user,
         token,
       });
-    }).catch(next(500));
+    }).catch(() => next(500));
   });
 
   return nextMain();

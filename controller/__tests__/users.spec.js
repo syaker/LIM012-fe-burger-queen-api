@@ -1,5 +1,9 @@
 const {
   getUsers,
+  getOneUser,
+  addUser,
+  deleteUser,
+  updateUser
 } = require('../../controller/users');
 
 describe('getUsers', () => {
