@@ -25,7 +25,6 @@ module.exports = (app, nextMain) => {
     }
     User.findOne({ email }, (err, dbUser) => {
       // TODO: autenticar a la usuarix
-      console.log(bcrypt.compareSync(password, dbUser.password));
       if (err) {
         return next(500);
       }
@@ -37,19 +36,17 @@ module.exports = (app, nextMain) => {
       } 
       return dbUser;
     }).then((user) => {
-      console.log(user);
         const token = jwt.sign({
         uid: user._id,
       }, secret, {
         expiresIn: 60 * 60 * 24
       });
-      resp.set('authorization', token);
       resp.json({
         auth: true,
         user,
         token,
       });
-    }).catch((err) =>  next(err));
+    }).catch(next(500));
   });
 
   return nextMain();

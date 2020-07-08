@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const Schema = mongoose.Schema;
 const usuarioSchema = new Schema({
@@ -17,7 +18,8 @@ const usuarioSchema = new Schema({
     },
 });
 // se agrera el plugin de validacion unica y exportamos el schema
-// usuarioSchema.plugin(uniqueValidator, {
-//     message: '{PATH} debe de ser único'
-// })
-module.exports = mongoose.model('Users', usuarioSchema)
+usuarioSchema.plugin(uniqueValidator, {
+    message: '{PATH} debe de ser único'
+})
+usuarioSchema.plugin(mongoosePaginate);
+module.exports = mongoose.model('Users', usuarioSchema);

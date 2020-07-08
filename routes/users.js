@@ -8,24 +8,26 @@ const {
 
 const {
   getUsers,
+  getOneUser,
+  addUser,
+  deleteUser,
+  updateUser
 } = require('../controller/users');
 
-const initAdminUser = (app, next) => {
+const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
-
-  const adminUser = new User({
-    email: adminEmail,
-    password: bcrypt.hashSync(adminPassword, 10),
-    roles: { admin: true },
-  });
-
-  // TODO: crear usuaria admin
-  adminUser.save().catch(() => {
-    console.log('ya existe')
-  });
+  try {
+    await User.findOne({ email: adminEmail });
+  } catch {
+    new User({
+      email: adminEmail,
+      password: bcrypt.hashSync(adminPassword, 10),
+      roles: { admin: true },
+    }).save();
+  }
   return next();
 };
 
@@ -60,24 +62,24 @@ const initAdminUser = (app, next) => {
 module.exports = (app, next) => {
   /**
    * @name GET /users
-   * @description Lista usuarias
-   * @path {GET} /users
-   * @query {String} [page=1] Página del listado a consultar
-   * @query {String} [limit=10] Cantitad de elementos por página
+   * x @description Lista usuarias
+   * x @path {GET} /users
+   * x @query {String} [page=1] Página del listado a consultar
+   * x @query {String} [limit=10] Cantitad de elementos por página
    * @header {Object} link Parámetros de paginación
    * @header {String} link.first Link a la primera página
    * @header {String} link.prev Link a la página anterior
    * @header {String} link.next Link a la página siguiente
    * @header {String} link.last Link a la última página
    * @auth Requiere `token` de autenticación y que la usuaria sea **admin**
-   * @response {Array} users
-   * @response {String} users[]._id
-   * @response {Object} users[].email
-   * @response {Object} users[].roles
-   * @response {Boolean} users[].roles.admin
-   * @code {200} si la autenticación es correcta
-   * @code {401} si no hay cabecera de autenticación
-   * @code {403} si no es ni admin
+   * x @response {Array} users
+   * x @response {String} users[]._id
+   * x @response {Object} users[].email
+   * x @response {Object} users[].roles
+   * x @response {Boolean} users[].roles.admin
+   * x @code {200} si la autenticación es correcta
+   * x @code {401} si no hay cabecera de autenticación
+   * x @code {403} si no es ni admin
    */
   app.get('/users', requireAdmin, getUsers);
 
@@ -87,137 +89,80 @@ module.exports = (app, next) => {
    * @path {GET} /users/:uid
    * @params {String} :uid `id` o `email` de la usuaria a consultar
    * @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a consultar
-   * @response {Object} user
-   * @response {String} user._id
-   * @response {Object} user.email
-   * @response {Object} user.roles
-   * @response {Boolean} user.roles.admin
-   * @code {200} si la autenticación es correcta
+   * x @response {Object} user
+   * x @response {String} user._id
+   * x @response {Object} user.email
+   * x @response {Object} user.roles
+   * x @response {Boolean} user.roles.admin
+   * x @code {200} si la autenticación es correcta
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si no es ni admin o la misma usuaria
-   * @code {404} si la usuaria solicitada no existe
+   * x @code {404} si la usuaria solicitada no existe
    */
-  app.get('/users/:uid', requireAuth, (req, resp) => {
-    const { id } = req.params;
-    User.findOne({ _id: id }, (err, dbUser) => {
-      if (err) {
-        return next(404);
-      } else {
-        resp.json(dbUser);
-      }
-    });
-  });
+  app.get('/users/:uid', requireAuth, getOneUser);
 
   /**
    * @name POST /users
-   * @description Crea una usuaria
-   * @path {POST} /users
-   * @body {String} email Correo
-   * @body {String} password Contraseña
-   * @body {Object} [roles]
-   * @body {Boolean} [roles.admin]
+   * x @description Crea una usuaria
+   * x @path {POST} /users
+   * x @body {String} email Correo
+   * x @body {String} password Contraseña
+   * x @body {Object} [roles]
+   * x @body {Boolean} [roles.admin]
    * @auth Requiere `token` de autenticación y que la usuaria sea **admin**
    * @response {Object} user
-   * @response {String} user._id
-   * @response {Object} user.email
-   * @response {Object} user.roles
-   * @response {Boolean} user.roles.admin
-   * @code {200} si la autenticación es correcta
-   * @code {400} si no se proveen `email` o `password` o ninguno de los dos
-   * @code {401} si no hay cabecera de autenticación
-   * @code {403} si ya existe usuaria con ese `email`
+   * x @response {String} user._id
+   * x @response {Object} user.email
+   * x @response {Object} user.roles
+   * x @response {Boolean} user.roles.admin
+   * x @code {200} si la autenticación es correcta
+   * x @code {400} si no se proveen `email` o `password` o ninguno de los dos
+   * x @code {401} si no hay cabecera de autenticación
+   * x @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, (req, resp, next) => {
-    const { email, password, roles } = req.body;
-    if (!email || !password) {
-      return next(400)
-    }
-    User.findOne({ email: email }, (err, dbUser) => {
-      if (dbUser) {
-        return next(403);
-      }
-    });
-    const user = new User({
-      email,
-      password: bcrypt.hashSync(password, 10),
-      roles
-    });
-    user.save((err, newUser) => {
-      if (err) {
-        return next(400);
-      }
-    });
-    resp.json({
-      email,
-      roles
-    });
-    return next(200);
-  });
+  app.post('/users', requireAdmin, addUser);
 
   /**
-   * @name PUT /users
-   * @description Modifica una usuaria
-   * @params {String} :uid `id` o `email` de la usuaria a modificar
-   * @path {PUT} /users
-   * @body {String} email Correo
-   * @body {String} password Contraseña
-   * @body {Object} [roles]
-   * @body {Boolean} [roles.admin]
+   * x @name PUT /users
+   * x @description Modifica una usuaria
+   * x @params {String} :uid `id` o `email` de la usuaria a modificar
+   * x @path {PUT} /users
+   * x @body {String} email Correo
+   * x @body {String} password Contraseña
+   * x @body {Object} [roles]
+   * x @body {Boolean} [roles.admin]
    * @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a modificar
-   * @response {Object} user
-   * @response {String} user._id
-   * @response {Object} user.email
-   * @response {Object} user.roles
-   * @response {Boolean} user.roles.admin
-   * @code {200} si la autenticación es correcta
-   * @code {400} si no se proveen `email` o `password` o ninguno de los dos
-   * @code {401} si no hay cabecera de autenticación
-   * @code {403} si no es ni admin o la misma usuaria
-   * @code {403} una usuaria no admin intenta de modificar sus `roles`
-   * @code {404} si la usuaria solicitada no existe
+   * x @response {Object} user
+   * x @response {String} user._id
+   * x @response {Object} user.email
+   * x @response {Object} user.roles
+   * x @response {Boolean} user.roles.admin
+   * x @code {200} si la autenticación es correcta
+   * x @code {400} si no se proveen `email` o `password` o ninguno de los dos
+   * x @code {401} si no hay cabecera de autenticación
+   * x @code {403} si no es ni admin o la misma usuaria
+   * x @code {403} una usuaria no admin intenta de modificar sus `roles`
+   * x @code {404} si la usuaria solicitada no existe
    */
-  app.put('/users/:uid', requireAuth, async (req, resp, next) => {
-    const { id } = req.params;
-    const { email, password } = req.body;
-    if (!email || !password) {
-      next(400);
-    }
-    const doc = await User.updateOne({ _id: id }, req.body);
-    if (doc) {
-      resp.json({
-        message: `doc ${id} updated`,
-        document: doc,
-      });
-      return next(200);
-    } else {
-      return next(404);
-    }
-  });
+  app.put('/users/:uid', requireAuth, updateUser);
 
   /**
-   * @name DELETE /users
-   * @description Elimina una usuaria
-   * @params {String} :uid `id` o `email` de la usuaria a modificar
-   * @path {DELETE} /users
-   * @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a eliminar
-   * @response {Object} user
-   * @response {String} user._id
-   * @response {Object} user.email
-   * @response {Object} user.roles
-   * @response {Boolean} user.roles.admin
-   * @code {200} si la autenticación es correcta
-   * @code {401} si no hay cabecera de autenticación
-   * @code {403} si no es ni admin o la misma usuaria
-   * @code {404} si la usuaria solicitada no existe
+   * x @name DELETE /users
+   * x @description Elimina una usuaria
+   * x @params {String} :uid `id` o `email` de la usuaria a modificar
+   * x @path {DELETE} /users
+   *   @auth Requiere `token` de autenticación y que la usuaria sea **admin** o la usuaria a eliminar
+   * x @response {Object} user
+   * x @response {String} user._id
+   * x @response {Object} user.email
+   * x @response {Object} user.roles
+   * x @response {Boolean} user.roles.admin
+   * x @code {200} si la autenticación es correcta
+   * x @code {401} si no hay cabecera de autenticación
+   * x @code {403} si no es ni admin o la misma usuaria
+   * x @code {404} si la usuaria solicitada no existe
    */
-  app.delete('/users/:uid', requireAuth, async(req, resp, next) => {
-    const { id } = req.params;
-    const doc = await User.deleteOne({ _id: id });
-    resp.json({
-      message: `doc ${id} deleted`,
-      document: doc,
-    });
-  });
+  app.delete('/users/:uid', requireAuth, deleteUser);
 
   initAdminUser(app, next);
 };
