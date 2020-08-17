@@ -50,10 +50,10 @@ podemos enviarle _consultas_ (_request_) y obtener _respuestas_ (_response_).
 
 ### Frontend Development
 
-* [x] Variables de entorno
+* [ ] Variables de entorno
 * [x] `SSH`
-* [x] `SSH` keys
-* [x] Qué es un VPS
+* [ ] `SSH` keys
+* [ ] Qué es un VPS
 
 ### MongoDB o MySQL (según corresponda)
 
@@ -66,8 +66,8 @@ podemos enviarle _consultas_ (_request_) y obtener _respuestas_ (_response_).
 
 * [x] Contenedores
 * [x] Qué es Docker
-* [x] Qué es Docker compose
-* [x] Uso de `docker-compose`
+* [ ] Qué es Docker compose
+* [ ] Uso de `docker-compose`
 
 ### Colaboración y Organización con Git y Github
 
