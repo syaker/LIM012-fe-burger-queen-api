@@ -20,9 +20,10 @@ const initAdminUser = (app, next) => {
   }
   new Promise((res) => {
     res(
-      mongodb.then((db) =>
-        db.collection("users").findOne({ email: adminEmail })
-      )
+      mongodb.then((db) => {
+		  console.log(db)
+        db.collection("users").findOne({ email: adminEmail });
+      })
     ).catch((err) => console.log(err));
   })
     .then((user) => {
