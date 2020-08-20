@@ -77,7 +77,6 @@ module.exports = {
       db.collection("orders")
         .findOne({ _id: ObjectID(orderId) })
         .then((orderData) => {
-          console.log(orderData);
           if (!orderData) return next(404);
           db.collection("orders")
             .updateOne({ _id: ObjectID(orderId) }, { $set: order })
@@ -85,7 +84,6 @@ module.exports = {
               db.collection("orders")
                 .findOne({ _id: ObjectID(orderId) })
                 .then((order) => {
-                  console.log(order);
                   resp.status(200).json(order);
                 });
             });

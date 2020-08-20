@@ -13,33 +13,30 @@ const {
   deleteAnUser,
 } = require("../controller/users");
 
-const initAdminUser = (app, next) => {
+const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get("config");
   if (!adminEmail || !adminPassword) {
     return next();
   }
-  new Promise((res) => {
-    res(
-      mongodb.then((db) => {
-        db.collection("users").findOne({ email: adminEmail });
+  mongodb.then((db) => {
+    db.collection("users")
+      .findOne({ email: adminEmail })
+      .then((user) => {
+        const adminUser = {
+          email: adminEmail,
+          password: bcrypt.hashSync(adminPassword, 10),
+          roles: { admin: true },
+        };
+        if (user === null) {
+          mongodb.then((db) => {
+            db.collection("users").insertOne(adminUser);
+          });
+        }
+        next();
       })
-    ).catch((err) => console.log(err));
-  })
-    .then((user) => {
-      const adminUser = {
-        email: adminEmail,
-        password: bcrypt.hashSync(adminPassword, 10),
-        roles: { admin: true },
-      };
-      if (!user) {
-        mongodb.then((db) => {
-          db.collection("users").insertOne(adminUser);
-        });
-      }
-      next();
-    })
-    .catch((err) => console.log(err));
-  // TODO: crear usuaria admin
+      .catch((err) => console.log(err));
+    // TODO: crear usuaria admin
+  });
 };
 
 /*

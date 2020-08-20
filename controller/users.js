@@ -56,26 +56,30 @@ module.exports = {
         db.collection("users")
           .findOne({ _id: ObjectID(uid) })
           .then((user) => {
+            if (user === null) {
+              return next(404);
+            }
+            if (user) {
+              delete user.password;
+              resp.status(200).json(user);
+            }
+          })
+          .catch((err) => console.log(err));
+      });
+    } else {
+      mongodb.then((db) => {
+        db.collection("users")
+          .findOne({ email: uid })
+          .then((user) => {
             if (!user) return next(404);
             if (user) {
               delete user.password;
-              resp.status(200).send(user);
+              resp.status(200).json(user);
             }
-          });
+          })
+          .catch((err) => console.log(err));
       });
     }
-    mongodb.then((db) => {
-      db.collection("users")
-        .findOne({ email: uid })
-        .then((user) => {
-          if (!user) return next(404);
-          if (user) {
-            delete user.password;
-            resp.status(200).json(user);
-          }
-        })
-        .catch((err) => console.log(err));
-    });
   },
 
   createAnUser: (req, resp, next) => {
@@ -117,6 +121,9 @@ module.exports = {
                   email,
                   roles,
                 };
+                return userObj;
+              })
+              .then((userObj) => {
                 resp.status(200).json(userObj);
               });
           }
@@ -145,32 +152,34 @@ module.exports = {
           .then((user) => {
             if (!user) return next(404);
             if (!data.email && !data.password && !data.roles) return next(400);
-            db.collection(collection).updateOne(
+            db.collection("users").updateOne(
               { _id: ObjectID(uid) },
               { $set: data }
             );
             db.collection("users")
               .findOne({ _id: ObjectID(uid) })
               .then((userData) => {
+				delete userData.password
+                resp.status(200).json(userData);
+              });
+          });
+      });
+    } else {
+      mongodb.then((db) => {
+        db.collection("users")
+          .findOne({ email: uid })
+          .then((user) => {
+            if (user === null) return next(404);
+            if (!data.email && !data.password && !data.roles) return next(400);
+            db.collection("users").updateOne({ email: uid }, { $set: data });
+            db.collection("users")
+              .findOne({ email: uid })
+              .then((userData) => {
                 resp.status(200).json(userData);
               });
           });
       });
     }
-    mongodb.then((db) => {
-      db.collection("users")
-        .findOne({ email: uid })
-        .then((user) => {
-          if (user === null) return next(404);
-          if (!data.email && !data.password && !data.roles) return next(400);
-          db.collection("users").updateOne({ email: uid }, { $set: data });
-          db.collection("users")
-            .findOne({ email: uid })
-            .then((userData) => {
-              resp.status(200).json(userData);
-            });
-        });
-    });
   },
 
   deleteAnUser: (req, resp, next) => {
@@ -197,22 +206,23 @@ module.exports = {
             return next(404);
           });
       });
+    } else {
+      mongodb.then((db) => {
+        db.collection("users")
+          .findOne({ email: uid })
+          .then((userData) => {
+            if (!userData) return next(404);
+            db.collection("users").deleteOne({ email: uid });
+            db.collection("users")
+              .findOne({ email: uid })
+              .then((user) => {
+                if (!user) resp.status(200).json(userData);
+              });
+          })
+          .catch((err) => {
+            return next(404);
+          });
+      });
     }
-    mongodb.then((db) => {
-      db.collection("users")
-        .findOne({ email: uid })
-        .then((userData) => {
-          if (!userData) return next(404);
-          db.collection("users").deleteOne({ email: uid });
-          db.collection("users")
-            .findOne({ email: uid })
-            .then((user) => {
-              if (!user) resp.status(200).json(userData);
-            });
-        })
-        .catch((err) => {
-          return next(404);
-        });
-    });
   },
 };
