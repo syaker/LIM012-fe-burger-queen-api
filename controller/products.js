@@ -92,7 +92,7 @@ module.exports = {
             );
             db.collection("products")
               .findOne({ _id: ObjectID(uidProduct) })
-              .then((order) => resp.status(200).json(order));
+              .then((product) => resp.status(200).json(product));
           });
       })
       .catch((err) => {
