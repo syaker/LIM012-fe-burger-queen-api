@@ -1,5 +1,7 @@
-const { db } = require("../db-connection/connection");
+/* eslint-disable no-console */
+/* eslint-disable no-param-reassign */
 const { ObjectID } = require("mongodb");
+const { db } = require("../db-connection/connection");
 const { dbUrl } = require("../config");
 const { pagination } = require("../utils/pagination");
 
@@ -9,24 +11,22 @@ const isEmail = (uid) => /\S+@\S+/.test(uid);
 
 module.exports = {
   getUsers: (req, resp, next) => {
-    const page = req.query.page || 1; //Pagina a consultar
+    const page = req.query.page || 1; // Pagina a consultar
     const limitNumber = req.query.limit || 10; // Limite de elementos por pagina
-    const skip_page = (page - 1) * limitNumber; //De cuanto en cuanto se mostraran los documentos
+    const skipPage = (page - 1) * limitNumber; // De cuanto en cuanto se mostraran los documentos
     const url = `${req.protocol}://${req.get("host")}${req.path}`;
     const allUsers = mongodb.then((db) => {
       db.collection("users")
         .find({})
         .toArray()
-        .then((docs) => {
-          return docs;
-        });
+        .then((docs) => docs);
     });
     const pagePagination = pagination(url, limitNumber, page, allUsers.length);
     resp.set("link", pagePagination);
     mongodb.then((db) => {
       db.collection("users")
         .find({})
-        .skip(skip_page)
+        .skip(skipPage)
         .limit(Number(limitNumber))
         .toArray()
         .then((docs) => {
@@ -36,15 +36,13 @@ module.exports = {
           });
           return resp.status(200).json(docsWhithoutPass);
         })
-        .catch(() => {
-          return next(500);
-        });
+        .catch(() => next(500));
     });
   },
 
   getAnUser: (req, resp, next) => {
     const { _id, email, roles } = req.user;
-    const uid = req.params.uid;
+    const { uid } = req.params;
     if (roles.admin === false) {
       if (!isEmail(uid)) {
         if (uid !== _id) return next(403);
@@ -107,15 +105,15 @@ module.exports = {
     };
     mongodb.then((db) => {
       db.collection("users")
-        .findOne({ email: email })
+        .findOne({ email })
         .then((userData) => {
           if (!userData) {
             db.collection("users")
               .insertOne(user)
               .then((userData) => {
-                const email = userData.ops[0].email;
-                const roles = userData.ops[0].roles;
-                const _id = userData.ops[0]._id;
+                const { email } = userData.ops[0];
+                const { roles } = userData.ops[0];
+                const { _id } = userData.ops[0];
                 const userObj = {
                   _id,
                   email,
@@ -135,7 +133,7 @@ module.exports = {
   updateAnUser: (req, resp, next) => {
     const { _id, email, roles } = req.user;
     const data = req.body;
-    const uid = req.params.uid;
+    const { uid } = req.params;
     if (roles.admin === false) {
       if (!isEmail(uid)) {
         if (uid !== _id) return next(403);
@@ -152,15 +150,15 @@ module.exports = {
           .then((user) => {
             if (!user) return next(404);
             if (!data.email && !data.password && !data.roles) return next(400);
-            db.collection("users").updateOne(
-              { _id: ObjectID(uid) },
-              { $set: data }
-            );
             db.collection("users")
-              .findOne({ _id: ObjectID(uid) })
-              .then((userData) => {
-				delete userData.password
-                resp.status(200).json(userData);
+              .updateOne({ _id: ObjectID(uid) }, { $set: data })
+              .then(() => {
+                db.collection("users")
+                  .findOne({ _id: ObjectID(uid) })
+                  .then((userData) => {
+                    delete userData.password;
+                    resp.status(200).json(userData);
+                  });
               });
           });
       });
@@ -184,7 +182,7 @@ module.exports = {
 
   deleteAnUser: (req, resp, next) => {
     const { _id, email, roles } = req.user;
-    const uid = req.params.uid;
+    const { uid } = req.params;
     if (roles.admin === false) {
       if (!isEmail(uid)) if (uid !== _id) return next(403);
       if (uid !== email) return next(403);
@@ -195,16 +193,17 @@ module.exports = {
           .findOne({ _id: ObjectID(uid) })
           .then((userData) => {
             if (!userData) return next(404);
-            db.collection("users").deleteOne({ _id: ObjectID(uid) });
             db.collection("users")
-              .findOne({ _id: ObjectID(uid) })
-              .then((user) => {
-                if (!user) resp.status(200).json(userData);
+              .deleteOne({ _id: ObjectID(uid) })
+              .then(() => {
+                db.collection("users")
+                  .findOne({ _id: ObjectID(uid) })
+                  .then((user) => {
+                    if (!user) resp.status(200).json(userData);
+                  });
               });
           })
-          .catch((err) => {
-            return next(404);
-          });
+          .catch(() => next(404));
       });
     } else {
       mongodb.then((db) => {
@@ -219,9 +218,7 @@ module.exports = {
                 if (!user) resp.status(200).json(userData);
               });
           })
-          .catch((err) => {
-            return next(404);
-          });
+          .catch(() => next(404));
       });
     }
   },
